@@ -1,0 +1,109 @@
+
+<head>
+<style>
+@media print {
+  @page {
+    size: 8in 6in;
+    margin: 0in;
+    padding: 0in;
+  } 
+  body {
+    padding: 0in;
+    margin: 0in;
+  }
+  article {
+    width: 6.5in;
+    height: 4.5in;
+    margin: 0.5in;
+    padding: .25in;
+  }
+}
+@media screen {
+  article {
+    margin-top: 1em;
+    padding: 1em;
+  }
+  body {
+    max-width: 8in;
+    margin: auto;
+  }
+}
+article {
+  max-width: 7in;
+  border-style: solid;
+}
+main {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-around;
+  grid-column-gap: 2em;
+}
+dt::after {
+  content: ": ";
+}
+dl {
+  margin-left: 1em;
+  margin-right: 1em;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: space-between;
+}
+dt {
+  display: inline;
+}
+dd {
+  display: inline;
+  margin-inline-start: 0px;
+}
+h1 {
+  page-break-before: always;
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h2 {
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h3 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+h4 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+#subtitle {
+  margin-left: 1em;
+}
+</style>
+</head>
+<article>
+  <header>
+    <h1>LEG OF LAMB</h1>
+    <h4 id="subtitle">From the kitchen of Mary C. Plona</h4>
+    <dl id="metadata">
+      <div><dt>Category</dt><dd>MEAT</dd></div>
+      <div><dt>Preparation time</dt><dd>15 min</dd></div>
+      <div><dt>Servings</dt><dd>6</dd></div>
+    </dl>
+  </header>
+  <hr/>
+  <main>
+  <section>
+    <h2>Ingredients</h2>
+    <ul>
+      <li> 1 Leg of Lamb, (4 #)</li>
+      <li>1/2 tsp Pepper</li>
+      <li> 1 Clove Garlic, cut in 4 slices</li>
+      <li>6 lemons</li>
+      <li>1 tsp Salt</li>
+      <li> 2 tsp Basil Leaves, dried</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Instructions</h2>
+    <p>Slit outer layer of fat & insert pieces of garlic under fat.  Rub salt & pepper on exterior of leg of lamb.  Place on rack in roasting pan.  Sprinkle with basil & lemons.  Roast, lightly covered in 350F oven for 1 hour.  Remove cover & roast 1 hour longer
+.  Serve with mint jelly.</p>
+  </section>
+  </main>
+</article>

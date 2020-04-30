@@ -1,0 +1,110 @@
+
+<head>
+<style>
+@media print {
+  @page {
+    size: 8in 6in;
+    margin: 0in;
+    padding: 0in;
+  } 
+  body {
+    padding: 0in;
+    margin: 0in;
+  }
+  article {
+    width: 6.5in;
+    height: 4.5in;
+    margin: 0.5in;
+    padding: .25in;
+  }
+}
+@media screen {
+  article {
+    margin-top: 1em;
+    padding: 1em;
+  }
+  body {
+    max-width: 8in;
+    margin: auto;
+  }
+}
+article {
+  max-width: 7in;
+  border-style: solid;
+}
+main {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-around;
+  grid-column-gap: 2em;
+}
+dt::after {
+  content: ": ";
+}
+dl {
+  margin-left: 1em;
+  margin-right: 1em;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: space-between;
+}
+dt {
+  display: inline;
+}
+dd {
+  display: inline;
+  margin-inline-start: 0px;
+}
+h1 {
+  page-break-before: always;
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h2 {
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h3 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+h4 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+#subtitle {
+  margin-left: 1em;
+}
+</style>
+</head>
+<article>
+  <header>
+    <h1>RHUBARB CRISP</h1>
+    <h4 id="subtitle">From the kitchen of Mary C. Plona</h4>
+    <dl id="metadata">
+      <div><dt>Category</dt><dd>DESSERT</dd></div>
+      <div><dt>Preparation time</dt><dd>20 min</dd></div>
+      <div><dt>Servings</dt><dd>6</dd></div>
+    </dl>
+  </header>
+  <hr/>
+  <main>
+  <section>
+    <h2>Ingredients</h2>
+    <ul>
+      <li> 6 cups Rhubarb, diced</li>
+      <li> 1/4 cup Sugar, granulated</li>
+      <li> 3/4 cup Brown Sugar, packed</li>
+      <li>1/2 cup all-purpose Flour</li>
+      <li> 1/2 cup Quick Oats, uncooked</li>
+      <li>1 tsp Cinnamon or apple pie spice</li>
+      <li> 5 tbsp Margarine, room temp.</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Instructions</h2>
+    <p>Preheat oven to 350F.  Place rhubarb in 9 x 9" baking pan.  Sprinkle with granulated  sugar.  In small bowl, combine brown sugar, flour, oats & spice.  Mix  well.  With pastry blender, cut margarine in until mixture resembles coarse crumbs. Sprinkle over 
+sweetened rhubarb.  Bake for 35 min or until golden brown. Serve with vanilla  ice cream, milk or vanilla  yogurt. </p>
+  </section>
+  </main>
+</article>

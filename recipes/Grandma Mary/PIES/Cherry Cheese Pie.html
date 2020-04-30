@@ -1,0 +1,109 @@
+
+<head>
+<style>
+@media print {
+  @page {
+    size: 8in 6in;
+    margin: 0in;
+    padding: 0in;
+  } 
+  body {
+    padding: 0in;
+    margin: 0in;
+  }
+  article {
+    width: 6.5in;
+    height: 4.5in;
+    margin: 0.5in;
+    padding: .25in;
+  }
+}
+@media screen {
+  article {
+    margin-top: 1em;
+    padding: 1em;
+  }
+  body {
+    max-width: 8in;
+    margin: auto;
+  }
+}
+article {
+  max-width: 7in;
+  border-style: solid;
+}
+main {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-around;
+  grid-column-gap: 2em;
+}
+dt::after {
+  content: ": ";
+}
+dl {
+  margin-left: 1em;
+  margin-right: 1em;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: space-between;
+}
+dt {
+  display: inline;
+}
+dd {
+  display: inline;
+  margin-inline-start: 0px;
+}
+h1 {
+  page-break-before: always;
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h2 {
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h3 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+h4 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+#subtitle {
+  margin-left: 1em;
+}
+</style>
+</head>
+<article>
+  <header>
+    <h1>CHERRY CHEESE PIE</h1>
+    <h4 id="subtitle">From the kitchen of Mary C. Plona</h4>
+    <dl id="metadata">
+      <div><dt>Category</dt><dd>PIE</dd></div>
+      <div><dt>Preparation time</dt><dd>25 min</dd></div>
+      <div><dt>Servings</dt><dd>8</dd></div>
+    </dl>
+  </header>
+  <hr/>
+  <main>
+  <section>
+    <h2>Ingredients</h2>
+    <ul>
+      <li> 1 (9") Graham Cracker Crust or </li>
+      <li>baked pastry shell</li>
+      <li> 8 oz Cream Cheese, softened</li>
+      <li>14 oz Sweet Condensed Milk</li>
+      <li>1/3 cup ReaLemon Lemon Juice</li>
+      <li>1 tsp Vanilla</li>
+      <li> 21 oz can Cherry Pie Filling, chilled</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Instructions</h2>
+    <p>In larlge mixer bowl, beat cheese until fluffy.  Gradually beat in sweetened  condensed milk until smooth.  Stir in ReaLemon brand & vanilla.  Pour into prepared crust.  Chill 3 hrs or until set.  Top with desired amount of pie filling before serving.</p>
+  </section>
+  </main>
+</article>

@@ -1,0 +1,114 @@
+
+<head>
+<style>
+@media print {
+  @page {
+    size: 8in 6in;
+    margin: 0in;
+    padding: 0in;
+  } 
+  body {
+    padding: 0in;
+    margin: 0in;
+  }
+  article {
+    width: 6.5in;
+    height: 4.5in;
+    margin: 0.5in;
+    padding: .25in;
+  }
+}
+@media screen {
+  article {
+    margin-top: 1em;
+    padding: 1em;
+  }
+  body {
+    max-width: 8in;
+    margin: auto;
+  }
+}
+article {
+  max-width: 7in;
+  border-style: solid;
+}
+main {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-around;
+  grid-column-gap: 2em;
+}
+dt::after {
+  content: ": ";
+}
+dl {
+  margin-left: 1em;
+  margin-right: 1em;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: space-between;
+}
+dt {
+  display: inline;
+}
+dd {
+  display: inline;
+  margin-inline-start: 0px;
+}
+h1 {
+  page-break-before: always;
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h2 {
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h3 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+h4 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+#subtitle {
+  margin-left: 1em;
+}
+</style>
+</head>
+<article>
+  <header>
+    <h1>CRANBERRY SALAD</h1>
+    <h4 id="subtitle">From the kitchen of Mary C. Plona</h4>
+    <dl id="metadata">
+      <div><dt>Category</dt><dd>SALAD</dd></div>
+      <div><dt>Preparation time</dt><dd>15 min</dd></div>
+      <div><dt>Servings</dt><dd>10</dd></div>
+    </dl>
+  </header>
+  <hr/>
+  <main>
+  <section>
+    <h2>Ingredients</h2>
+    <ul>
+      <li>3 envelopes Unflavored Gelatine</li>
+      <li>3/4 cup Cold Water</li>
+      <li>4 cups Cranberry Juice - divided</li>
+      <li>1/3 cup Sugar</li>
+      <li>1/4 tsp Salt</li>
+      <li>1/3 cup Lemon Juice</li>
+      <li>1 1/2 cups chopped unpeeled Apple</li>
+      <li>3/4 cup chopped Celery</li>
+      <li>1/2 cup broken Walnuts</li>
+      <li>Dressing :  equal parts of mayo</li>
+      <li>and sour cream</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Instructions</h2>
+    <p>In a large bowl soften gelatine in  cold water.  Heat 1 1/2 cups juice, add  sugar & salt to gelatin & stir until dissolved.  Add lemon juice & remaining 2 1/2 cups cranberry juice.  Pour 3/4 cups in  1 1/2 qt mold. Chill until firm.  Chill remaining gela
+tine until it begins to set, then fold in apple,celery & walnuts. Put in  mold & chill overnight. Serve with dressing. </p>
+  </section>
+  </main>
+</article>

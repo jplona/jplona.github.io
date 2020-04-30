@@ -1,0 +1,115 @@
+
+<head>
+<style>
+@media print {
+  @page {
+    size: 8in 6in;
+    margin: 0in;
+    padding: 0in;
+  } 
+  body {
+    padding: 0in;
+    margin: 0in;
+  }
+  article {
+    width: 6.5in;
+    height: 4.5in;
+    margin: 0.5in;
+    padding: .25in;
+  }
+}
+@media screen {
+  article {
+    margin-top: 1em;
+    padding: 1em;
+  }
+  body {
+    max-width: 8in;
+    margin: auto;
+  }
+}
+article {
+  max-width: 7in;
+  border-style: solid;
+}
+main {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-around;
+  grid-column-gap: 2em;
+}
+dt::after {
+  content: ": ";
+}
+dl {
+  margin-left: 1em;
+  margin-right: 1em;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: space-between;
+}
+dt {
+  display: inline;
+}
+dd {
+  display: inline;
+  margin-inline-start: 0px;
+}
+h1 {
+  page-break-before: always;
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h2 {
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h3 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+h4 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+#subtitle {
+  margin-left: 1em;
+}
+</style>
+</head>
+<article>
+  <header>
+    <h1>TUNA CASSEROLE</h1>
+    <h4 id="subtitle">From the kitchen of Mary C. Plona</h4>
+    <dl id="metadata">
+      <div><dt>Category</dt><dd>SEAFOOD</dd></div>
+      <div><dt>Preparation time</dt><dd>30 min.</dd></div>
+      <div><dt>Servings</dt><dd>6</dd></div>
+    </dl>
+  </header>
+  <hr/>
+  <main>
+  <section>
+    <h2>Ingredients</h2>
+    <ul>
+      <li>1/2 cup Celery, chopped</li>
+      <li>1/4 cup Onion, chopped</li>
+      <li>2 tbsp. Butter or Margarine</li>
+      <li>(1) 6 1/2-oz can Tuna, undrained </li>
+      <li>(1) 10 1/2-oz can Mushroom Soup</li>
+      <li>1/2 cup Mayonnaise</li>
+      <li>1 cup Milk</li>
+      <li>4-oz can Sliced Mushrooms, drained</li>
+      <li>1 tbsp. Pimento, chopped</li>
+      <li> 8-oz Wide Noodles, cooked</li>
+      <li>1/2 cup Bread Crumbs</li>
+      <li>2 tbsp Butter or Margarine, melted</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Instructions</h2>
+    <p>In large skillet saute onion & celery in butter or margarine. Add & mix tuna, soup, mayonnaise, milk, mushrooms, & pimento. In a greased 2 quart casserole, combine noodles and tuna mixture. Combine bread crumbs & 2 tbsp melted butter & sprinkle on top.   
+Bake at 350 F. for 25 to 30 min. or until browned & bubbly. </p>
+  </section>
+  </main>
+</article>

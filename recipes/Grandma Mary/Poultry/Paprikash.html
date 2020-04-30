@@ -1,0 +1,110 @@
+
+<head>
+<style>
+@media print {
+  @page {
+    size: 8in 6in;
+    margin: 0in;
+    padding: 0in;
+  } 
+  body {
+    padding: 0in;
+    margin: 0in;
+  }
+  article {
+    width: 6.5in;
+    height: 4.5in;
+    margin: 0.5in;
+    padding: .25in;
+  }
+}
+@media screen {
+  article {
+    margin-top: 1em;
+    padding: 1em;
+  }
+  body {
+    max-width: 8in;
+    margin: auto;
+  }
+}
+article {
+  max-width: 7in;
+  border-style: solid;
+}
+main {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-around;
+  grid-column-gap: 2em;
+}
+dt::after {
+  content: ": ";
+}
+dl {
+  margin-left: 1em;
+  margin-right: 1em;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: space-between;
+}
+dt {
+  display: inline;
+}
+dd {
+  display: inline;
+  margin-inline-start: 0px;
+}
+h1 {
+  page-break-before: always;
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h2 {
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h3 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+h4 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+#subtitle {
+  margin-left: 1em;
+}
+</style>
+</head>
+<article>
+  <header>
+    <h1>PAPRIKASH</h1>
+    <h4 id="subtitle">From the kitchen of Mary C. Plona</h4>
+    <dl id="metadata">
+      <div><dt>Category</dt><dd>POULTRY</dd></div>
+      <div><dt>Preparation time</dt><dd>30 min</dd></div>
+      <div><dt>Servings</dt><dd>4</dd></div>
+    </dl>
+  </header>
+  <hr/>
+  <main>
+  <section>
+    <h2>Ingredients</h2>
+    <ul>
+      <li>1 lb   Chicken Breasts, boneless</li>
+      <li>1 med   Onion, halved & sliced</li>
+      <li>2 tsp  Vegetable Oil</li>
+      <li>2  tsp  Paprika</li>
+      <li>1 can  Cream of Chicken Soup</li>
+      <li>1/4  cup  Water</li>
+      <li>1/4  cup lowfat Sour Cream or Yogurt</li>
+      <li>Hot Cooked Noodles</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Instructions</h2>
+    <p>In large skillet, saute chicken & onion in oil until chicken is browned.  Sprinkle with paprika.  Stir in soup & water.  Simmer 5 minutes.  Stir in sour cream.  Heat. Do not boil.  Serve over noodles.  Makes about five cups.</p>
+  </section>
+  </main>
+</article>

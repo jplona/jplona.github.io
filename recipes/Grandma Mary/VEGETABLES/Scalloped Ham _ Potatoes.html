@@ -1,0 +1,113 @@
+
+<head>
+<style>
+@media print {
+  @page {
+    size: 8in 6in;
+    margin: 0in;
+    padding: 0in;
+  } 
+  body {
+    padding: 0in;
+    margin: 0in;
+  }
+  article {
+    width: 6.5in;
+    height: 4.5in;
+    margin: 0.5in;
+    padding: .25in;
+  }
+}
+@media screen {
+  article {
+    margin-top: 1em;
+    padding: 1em;
+  }
+  body {
+    max-width: 8in;
+    margin: auto;
+  }
+}
+article {
+  max-width: 7in;
+  border-style: solid;
+}
+main {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-around;
+  grid-column-gap: 2em;
+}
+dt::after {
+  content: ": ";
+}
+dl {
+  margin-left: 1em;
+  margin-right: 1em;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: space-between;
+}
+dt {
+  display: inline;
+}
+dd {
+  display: inline;
+  margin-inline-start: 0px;
+}
+h1 {
+  page-break-before: always;
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h2 {
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h3 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+h4 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+#subtitle {
+  margin-left: 1em;
+}
+</style>
+</head>
+<article>
+  <header>
+    <h1>SCALLOPED HAM & POTATOES</h1>
+    <h4 id="subtitle">From the kitchen of Mary  C. Plona</h4>
+    <dl id="metadata">
+      <div><dt>Category</dt><dd>VEGETABLES</dd></div>
+      <div><dt>Preparation time</dt><dd>30 min</dd></div>
+      <div><dt>Servings</dt><dd>8</dd></div>
+    </dl>
+  </header>
+  <hr/>
+  <main>
+  <section>
+    <h2>Ingredients</h2>
+    <ul>
+      <li>4 cups heavy Whipping Cream</li>
+      <li>2 cloves Garlic, slivered</li>
+      <li>1 tsp dried Thyme  leaves</li>
+      <li>1 tsp Salt</li>
+      <li>1/2 tsp Pepper</li>
+      <li>1 # Ham, sliced</li>
+      <li>2 # Potatoes, peeled & thinly sliced</li>
+      <li>1 lg Onion, thinly sliced</li>
+      <li></li>
+      <li>1 tbsp fresh Parsley, chopped</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Instructions</h2>
+    <p> Combine cream, garlic, thyme, salt & pepper in heavy saucepan.  Bring to boil, reduce to simmer & cook 10 to 12 min until sauce has reduced by third.  Butter shallow 8 x 14 pyrex dish. Layer 1/2 of ham, 1/2 of potatoes, 1/2 of onion .Pour 1/2 of cream mi
+xture over layers. Repeat layering. Bake 350F for 1  hr until brown & bubbly.</p>
+  </section>
+  </main>
+</article>

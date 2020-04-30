@@ -1,0 +1,115 @@
+
+<head>
+<style>
+@media print {
+  @page {
+    size: 8in 6in;
+    margin: 0in;
+    padding: 0in;
+  } 
+  body {
+    padding: 0in;
+    margin: 0in;
+  }
+  article {
+    width: 6.5in;
+    height: 4.5in;
+    margin: 0.5in;
+    padding: .25in;
+  }
+}
+@media screen {
+  article {
+    margin-top: 1em;
+    padding: 1em;
+  }
+  body {
+    max-width: 8in;
+    margin: auto;
+  }
+}
+article {
+  max-width: 7in;
+  border-style: solid;
+}
+main {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-around;
+  grid-column-gap: 2em;
+}
+dt::after {
+  content: ": ";
+}
+dl {
+  margin-left: 1em;
+  margin-right: 1em;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: space-between;
+}
+dt {
+  display: inline;
+}
+dd {
+  display: inline;
+  margin-inline-start: 0px;
+}
+h1 {
+  page-break-before: always;
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h2 {
+  margin-block-start: 0.0em;
+  margin-block-end: 0.5em;
+}
+h3 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+h4 {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+}
+#subtitle {
+  margin-left: 1em;
+}
+</style>
+</head>
+<article>
+  <header>
+    <h1>VEGETABLE PIZZA</h1>
+    <h4 id="subtitle">From the kitchen of Mary C. Plona</h4>
+    <dl id="metadata">
+      <div><dt>Category</dt><dd>APPETIZERS</dd></div>
+      <div><dt>Preparation time</dt><dd>25 min</dd></div>
+      <div><dt>Servings</dt><dd>10</dd></div>
+    </dl>
+  </header>
+  <hr/>
+  <main>
+  <section>
+    <h2>Ingredients</h2>
+    <ul>
+      <li>DIP:</li>
+      <li>&nbsp;&nbsp;1 Cup Hellman's Mayo</li>
+      <li>&nbsp;&nbsp;8 oz Cream Cheese</li>
+      <li>&nbsp;&nbsp;1 pkg Hidden Valley Dry Mix</li>
+      <li>VEGETABLES:</li>
+      <li>&nbsp;&nbsp;1/2 Green Pepper</li>
+      <li>&nbsp;&nbsp;Carrots &amp; Radishes, grated</li>
+      <li>&nbsp;&nbsp;Cucumber with skin</li>
+      <li>&nbsp;&nbsp;Cheddar Cheese, finely grated</li>
+      <li>&nbsp;&nbsp;Cauliflower &amp; Broccoli</li>
+      <p></p>
+      <li>2 Tubes Crescent Rolls</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Instructions</h2>
+    <p>Grease jelly roll pan with margarine. Spread 2 tubes of Pillsbury Crescent Rolls in pan.  Bake 10 to 15 min at 400 F or until golden brown.  Blend ingredients for Dip and place on cool crust.  Cut vegetables into small pieces &amp; spread  over dip. End with 
+cauliflower and broccoli on top.  Cut into serving pieces or use as appetizers.</p>
+  </section>
+  </main>
+</article>
