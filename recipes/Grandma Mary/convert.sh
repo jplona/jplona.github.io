@@ -83,15 +83,13 @@ h4 {
 
 entries=''
 body=''
-find . -name "*.wdb" |
-  sort |
-  while read line; do
-    recipe="$(./convert_one.sh "${line}")"
-    entries="${entries}$(echo "${recipe}" | head -1)"
-    recipe_body="$(echo "${recipe}" | tail -n +2)"
-    echo "${header}${recipe_body}" > "${line%.wdb}.html"
-    body="${body}${recipe_body}"
-  done
+while read line; do
+  recipe="$(./convert_one.sh "${line}")"
+  entries="${entries}$(echo; echo "${recipe}" | head -1)"
+  recipe_body="$(echo "${recipe}" | tail -n +2)"
+  echo "${header}${recipe_body}" > "${line%.wdb}.html"
+  body="${body}${recipe_body}"
+done < <(find . -name "*.wdb" | sort | tail -5)
 
 _last_category=''
 toc=$(echo "${entries}" |
@@ -103,5 +101,7 @@ toc=$(echo "${entries}" |
   done)
 
 echo "${header}${body}" > recipes.html
+
+echo "${entries}"
 
 echo "${toc}"
