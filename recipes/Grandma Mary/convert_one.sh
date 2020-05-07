@@ -8,8 +8,16 @@ function extract() {
   echo "${csv}" | csvtool col "$1" -
 }
 
-function cell() {
+function escape() {
+  sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g; s/'"'"'/\&#39;/g'
+}
+
+function rawcell() {
   extract "$1" | csvtool format '%1' -
+}
+
+function cell() {
+  rawcell "$1" | escape
 }
 
 recipe_name=$(cell '1')
@@ -21,7 +29,7 @@ author=$(cell '18')
 
 num_ingredients=$(extract '3-14' | csvtool trim r - | csvtool width -)
 
-last_ingredient="$(cell $(( 3 + ${num_ingredients} - 1 )) )"
+last_ingredient="$(rawcell $(( 3 + ${num_ingredients} - 1 )) )"
 instructions="$(strings "${recipe}" | sed -n -e "/^ *${last_ingredient//\//\\\/} *\$/,/^ *${prep_time//\//\\\/} *\$/p" | tail -n +2 | head -n -1)"
 
 echo -e "${category}\t${recipe_name}"
