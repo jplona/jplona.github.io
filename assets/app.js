@@ -1,4 +1,23 @@
 (() => {
+  const themeButtons = Array.from(document.querySelectorAll("[data-set-theme]"));
+  const syncThemeButtons = (mode) => {
+    for (const btn of themeButtons) {
+      btn.setAttribute("aria-pressed", btn.dataset.setTheme === mode ? "true" : "false");
+    }
+  };
+  const currentTheme = document.documentElement.getAttribute("data-theme") === "modern" ? "modern" : "classic";
+  syncThemeButtons(currentTheme);
+  for (const btn of themeButtons) {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.setTheme === "modern" ? "modern" : "classic";
+      document.documentElement.setAttribute("data-theme", mode);
+      try {
+        localStorage.setItem("recipe-theme", mode);
+      } catch (_err) {}
+      syncThemeButtons(mode);
+    });
+  }
+
   const searchInput = document.getElementById("recipe-search");
   const clearBtn = document.getElementById("clear-search");
   const resultCount = document.getElementById("result-count");

@@ -4,6 +4,7 @@ Author: Mary C. Plona
 Prep Time: 20 min
 Servings: 4 - 6
 Source: 
+Clipart: clip-71c45e1f2c.png
 Missing: false
 
 ## Ingredients

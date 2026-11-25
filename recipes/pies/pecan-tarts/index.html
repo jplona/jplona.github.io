@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="classic">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,6 +12,12 @@
   <link rel="canonical" href="https://recipes.plona.family/recipes/pies/pecan-tarts/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/style.css">
+  <script>
+    try {
+      var t = localStorage.getItem("recipe-theme");
+      if (t === "modern" || t === "classic") document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {}
+  </script>
 </head>
 <body class="page-recipe">
   <nav class="top-nav no-print" aria-label="Breadcrumb and actions">
@@ -20,6 +26,7 @@
       <a class="nav-cat" href="/#cat-pies">Pies</a>
     </div>
     <div class="nav-actions">
+      <div class="theme-switch" role="group" aria-label="Theme"><button type="button" class="theme-btn" data-set-theme="classic" aria-pressed="true">Classic Card</button><button type="button" class="theme-btn" data-set-theme="modern" aria-pressed="false">Modern</button></div>
       <button type="button" class="btn-secondary" id="wake-lock-btn" hidden>Keep screen on</button>
       <button type="button" class="btn-secondary" onclick="window.print()">Print</button>
     </div>
@@ -27,17 +34,23 @@
   <main class="container">
     <article class="recipe-card">
     <header class="card-header">
-      <h1>Pecan Tarts</h1>
-      <p class="card-subtitle">From the kitchen of Mary C. Plona</p>
-      <dl class="card-meta">
-        <div><dt>Category</dt><dd><a href="/#cat-pies">Pies</a></dd></div><div><dt>Prep time</dt><dd>1 hr</dd></div><div><dt>Servings</dt><dd>48 tarts</dd></div>
-      </dl>
+      <div class="card-top">
+        <div class="card-clipart"><img src="/assets/clipart/clip-e08a15b418.png" alt="" loading="lazy"></div>
+        <div class="card-title-group">
+          <h1>Pecan Tarts</h1>
+          <p class="card-subtitle"><span class="kitchen-prefix">From the kitchen of<span class="classic-colon">:</span></span> <span class="author-script">Mary C. Plona</span></p>
+          <dl class="card-meta">
+            <div><dt>Category</dt><dd><a href="/#cat-pies">Pies</a></dd></div><div><dt>Preparation time</dt><dd>1 hr</dd></div><div><dt>Servings</dt><dd>48 tarts</dd></div>
+          </dl>
+        </div>
+      </div>
     </header>
     
       <div class="recipe-columns">
         <section class="ingredients-col">
           <h2>Ingredients</h2>
-          <ul class="ingredient-list">
+          <div class="col-body">
+            <ul class="ingredient-list">
         <li class="ingredient-item"><label class="ingredient-check"><input type="checkbox"><span>2 (3 oz) pkgs Cream Cheese</span></label></li>
         <li class="ingredient-item"><label class="ingredient-check"><input type="checkbox"><span>1/2 cup Light Brown Sugar, packed</span></label></li>
         <li class="ingredient-item"><label class="ingredient-check"><input type="checkbox"><span>3/4 cup Butter or Margarine</span></label></li>
@@ -47,12 +60,15 @@
         <li class="ingredient-item"><label class="ingredient-check"><input type="checkbox"><span>2 Eggs, slightly beaten</span></label></li>
         <li class="ingredient-item"><label class="ingredient-check"><input type="checkbox"><span>3 tbsp Butter, melted</span></label></li>
         </ul>
+          </div>
         </section>
         <section class="instructions-col">
           <h2>Instructions</h2>
-          <p>Mix cream cheese, butter &amp; flour until thoroughly blended. Press dough onto bottom &amp; up sides of ungreased muffin cups, fitting in carefully to make sure no air bubbles form.</p>
-        <p>FILLING: Add brown sugar, vanilla, pecans &amp; melted butter to slightly beaten eggs &amp; mix. Drop 1 tsp of filling into each shell. Bake in 325F oven about 30 min. Remove tarts from pans as soon as baked. Yield: 48 small tarts. If mixture is too thick, add 2 tbsp corn syrup or honey.</p>
-          
+          <div class="col-body">
+            <p>Mix cream cheese, butter &amp; flour until thoroughly blended. Press dough onto bottom &amp; up sides of ungreased muffin cups, fitting in carefully to make sure no air bubbles form.</p>
+          <p>FILLING: Add brown sugar, vanilla, pecans &amp; melted butter to slightly beaten eggs &amp; mix. Drop 1 tsp of filling into each shell. Bake in 325F oven about 30 min. Remove tarts from pans as soon as baked. Yield: 48 small tarts. If mixture is too thick, add 2 tbsp corn syrup or honey.</p>
+            
+          </div>
         </section>
       </div>
   </article>

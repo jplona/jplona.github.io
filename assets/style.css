@@ -1,4 +1,19 @@
-:root {
+:root,
+[data-theme="classic"] {
+  --bg: #e8e4dc;
+  --surface: #ffffff;
+  --surface-muted: #f2f2f2;
+  --ink: #111111;
+  --muted: #444444;
+  --accent: #111111;
+  --accent-soft: #efefef;
+  --border: #111111;
+  --rule: #111111;
+  --shadow: 3px 3px 0 rgba(0, 0, 0, 0.14);
+  --radius: 0px;
+}
+
+[data-theme="modern"] {
   --bg: #f6f1e7;
   --surface: #fffdf8;
   --surface-muted: #efe7d8;
@@ -642,5 +657,263 @@ a {
   a {
     color: inherit;
     text-decoration: none;
+  }
+}
+
+/* Theme toggle & clipart layout */
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.theme-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.1;
+  min-height: 34px;
+  padding: 0.35rem 0.72rem;
+  border-radius: calc(var(--radius) * 0.75);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.theme-btn[aria-pressed="true"] {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.theme-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem 1.25rem;
+  flex-wrap: wrap;
+}
+
+.card-title-group {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.card-clipart {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+
+.card-clipart img {
+  display: block;
+  height: 76px;
+  width: auto;
+  max-width: 110px;
+  object-fit: contain;
+}
+
+.card-link-top {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.25rem;
+}
+
+.card-thumb {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.col-body > :first-child {
+  margin-top: 0;
+}
+
+.col-body > :last-child {
+  margin-bottom: 0;
+}
+
+[data-theme="modern"] .card-clipart,
+[data-theme="modern"] .card-thumb,
+[data-theme="modern"] .classic-colon {
+  display: none;
+}
+
+[data-theme="classic"] .btn-outline,
+[data-theme="classic"] .btn-secondary {
+  border-radius: 0;
+  border-width: 1.5px;
+}
+
+[data-theme="classic"] .recipe-card {
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+  border-width: 1.5px;
+}
+
+[data-theme="classic"] .recipe-card .card-header {
+  border-bottom: 0;
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+[data-theme="classic"] .card-header h1,
+[data-theme="classic"] .card-header h2 {
+  font-family: "Times New Roman", Times, Georgia, serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #111111;
+  line-height: 1.15;
+}
+
+[data-theme="classic"] .card-subtitle {
+  margin: 0.35rem 0 0.7rem;
+  font-style: normal;
+  color: #111111;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+[data-theme="classic"] .kitchen-prefix {
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+  font-style: normal;
+  font-size: 0.88rem;
+  color: #333333;
+}
+
+[data-theme="classic"] .author-script {
+  font-family: "Lucida Handwriting", "Segoe Script", "Apple Chancery", "Bradley Hand", "URW Chancery L", cursive;
+  font-style: normal;
+  font-size: 1.16rem;
+  font-weight: 400;
+  color: #111111;
+}
+
+[data-theme="classic"] .card-meta {
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+  font-size: 0.88rem;
+  gap: 0.3rem 1.4rem;
+  margin-top: 0.2rem;
+}
+
+[data-theme="classic"] .card-meta dt {
+  color: #111111;
+}
+
+[data-theme="classic"] .ingredients-col h2,
+[data-theme="classic"] .instructions-col h2 {
+  margin: 0;
+  padding: 0 0 0.35rem;
+  font-family: "Times New Roman", Times, Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #111111;
+  border-bottom: 2px solid #111111;
+}
+
+[data-theme="classic"] .col-body {
+  padding-top: 0.75rem;
+}
+
+[data-theme="classic"] .recipe-columns {
+  gap: 1.25rem;
+}
+
+@media (max-width: 520px) {
+  .card-clipart img {
+    height: 60px;
+    max-width: 92px;
+  }
+}
+
+@media (min-width: 520px) {
+  [data-theme="classic"] .card-top {
+    flex-wrap: nowrap;
+  }
+}
+
+@media (min-width: 720px) {
+  [data-theme="classic"] .recipe-card {
+    padding: 1.75rem 2rem 2rem;
+  }
+  [data-theme="classic"] .recipe-columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 0;
+    align-items: stretch;
+  }
+  [data-theme="classic"] .ingredients-col,
+  [data-theme="classic"] .instructions-col {
+    display: flex;
+    flex-direction: column;
+  }
+  [data-theme="classic"] .ingredients-col h2 {
+    padding: 0 1.25rem 0.4rem 0;
+  }
+  [data-theme="classic"] .instructions-col h2 {
+    padding: 0 0 0.4rem 1.25rem;
+  }
+  [data-theme="classic"] .ingredients-col .col-body {
+    padding: 0.85rem 1.25rem 0.25rem 0;
+    flex: 1;
+  }
+  [data-theme="classic"] .instructions-col .col-body {
+    padding: 0.85rem 0 0.25rem 1.25rem;
+    border-left: 1.5px solid #111111;
+    flex: 1;
+  }
+}
+
+@media print {
+  .theme-switch {
+    display: none !important;
+  }
+  [data-theme="classic"] body {
+    background: #ffffff;
+  }
+  [data-theme="classic"] .recipe-card {
+    border: 1.5px solid #111111;
+    box-shadow: none;
+    padding: 1.1rem 1.25rem 1.25rem;
+  }
+  [data-theme="classic"] .recipe-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 0;
+    align-items: stretch;
+  }
+  [data-theme="classic"] .ingredients-col,
+  [data-theme="classic"] .instructions-col {
+    display: flex;
+    flex-direction: column;
+  }
+  [data-theme="classic"] .ingredients-col h2 {
+    padding: 0 1rem 0.35rem 0;
+  }
+  [data-theme="classic"] .instructions-col h2 {
+    padding: 0 0 0.35rem 1rem;
+  }
+  [data-theme="classic"] .ingredients-col .col-body {
+    padding: 0.7rem 1rem 0.15rem 0;
+    flex: 1;
+  }
+  [data-theme="classic"] .instructions-col .col-body {
+    padding: 0.7rem 0 0.15rem 1rem;
+    border-left: 1.5px solid #111111;
+    flex: 1;
   }
 }

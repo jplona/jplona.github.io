@@ -4,6 +4,7 @@ Author: Mary C. Plona
 Prep Time: 15 min
 Servings: 1 cup
 Source: 
+Clipart: clip-508d7e088d.png, clip-6aa56409a8.svg
 Missing: false
 
 ## Ingredients

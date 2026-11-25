@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import struct
 import unicodedata
+import zlib
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -122,6 +124,7 @@ class Recipe:
     # Each item in ingredients is ("header", "Crust") or ("item", "...") or ("note", "...")
     instructions: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    clipart: list[str] = field(default_factory=list)
     source_files: list[str] = field(default_factory=list)
 
     @property
@@ -214,7 +217,7 @@ def decode_rk(b4: bytes) -> str:
     return str(val)
 
 
-def get_mn0_stream(data: bytes) -> bytes:
+def read_ole_archive(data: bytes) -> tuple[list[dict | None], callable]:
     if data[:8] != b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
         raise ValueError("Not an OLE2 compound file")
     sec_shift, mini_shift = struct.unpack_from("<HH", data, 0x1E)
@@ -245,42 +248,260 @@ def get_mn0_stream(data: bytes) -> bytes:
         mf_bytes = read_chain(minifat_start)
         minifat = list(struct.unpack_from(f"<{len(mf_bytes) // 4}I", mf_bytes, 0))
 
-    root_stream = b""
+    entries: list[dict | None] = []
     for i in range(0, len(dir_bytes), 128):
         ent = dir_bytes[i : i + 128]
         nlen = struct.unpack_from("<H", ent, 64)[0]
         if nlen == 0:
+            entries.append(None)
             continue
         name = ent[: max(0, nlen - 2)].decode("utf-16le", errors="replace")
         etype = ent[66]
+        left, right, child = struct.unpack_from("<iii", ent, 68)
         start, size = struct.unpack_from("<II", ent, 116)
-        if etype == 5:
-            root_stream = read_chain(start) if start < 0xFFFFFFFE else b""
-        elif name == "MN0":
-            if size < mini_cutoff:
-                out = bytearray()
-                cur = start
-                seen_m: set[int] = set()
-                while cur < 0xFFFFFFFE:
-                    if cur in seen_m:
-                        raise ValueError("Cycle in miniFAT chain")
-                    seen_m.add(cur)
-                    off = cur * mini_size
-                    out.extend(root_stream[off : off + mini_size])
-                    cur = minifat[cur]
-                return bytes(out[:size])
-            return read_chain(start)[:size]
-    raise ValueError("MN0 stream not found")
+        entries.append(
+            {
+                "name": name,
+                "type": etype,
+                "left": left,
+                "right": right,
+                "child": child,
+                "start": start,
+                "size": size,
+            }
+        )
+
+    root_stream = read_chain(entries[0]["start"]) if entries and entries[0] and entries[0]["start"] < 0xFFFFFFFE else b""
+
+    def get_bytes(e: dict) -> bytes:
+        if e["type"] != 2:
+            return b""
+        if e["size"] < mini_cutoff:
+            out = bytearray()
+            cur = e["start"]
+            seen_m: set[int] = set()
+            while cur < 0xFFFFFFFE:
+                if cur in seen_m:
+                    raise ValueError("Cycle in miniFAT chain")
+                seen_m.add(cur)
+                off = cur * mini_size
+                out.extend(root_stream[off : off + mini_size])
+                cur = minifat[cur]
+            return bytes(out[: e["size"]])
+        return read_chain(e["start"])[: e["size"]]
+
+    return entries, get_bytes
 
 
-def parse_wdb_file(path: Path) -> dict | None:
+def extract_matador_wmfs(entries: list[dict | None], get_bytes: callable) -> dict[int, bytes]:
+    wmfs: dict[int, bytes] = {}
+    for e in entries:
+        if not e or e["type"] != 1:
+            continue
+        m = re.fullmatch(r"MatadorObject(\d+)", e["name"])
+        if not m:
+            continue
+        mo_id = int(m.group(1))
+        if mo_id in (2, 8):
+            continue
+
+        def walk(idx: int) -> None:
+            if idx < 0 or idx >= len(entries) or entries[idx] is None:
+                return
+            node = entries[idx]
+            if node["name"] == "\x02OlePres000" and node["size"] > 500:
+                b = get_bytes(node)
+                w_idx = b.find(b"\x01\x00\x09\x00\x00\x03")
+                if w_idx != -1 and w_idx + 18 <= len(b):
+                    mt_size = struct.unpack_from("<I", b, w_idx + 6)[0] * 2
+                    if 20 <= mt_size <= len(b) - w_idx + 64:
+                        wmfs[mo_id] = b[w_idx : w_idx + mt_size]
+            walk(node["left"])
+            walk(node["right"])
+
+        walk(e["child"])
+    return wmfs
+
+
+def png_chunk(ctype: bytes, data: bytes) -> bytes:
+    crc = zlib.crc32(ctype + data) & 0xFFFFFFFF
+    return struct.pack(">I", len(data)) + ctype + data + struct.pack(">I", crc)
+
+
+def dib_wmf_to_png(wmf: bytes) -> bytes:
+    pos = 18
+    while pos + 6 <= len(wmf):
+        rsz = struct.unpack_from("<I", wmf, pos)[0] * 2
+        rop = struct.unpack_from("<H", wmf, pos + 4)[0]
+        rpay = wmf[pos + 6 : pos + rsz]
+        if rop == 0x0F43:
+            bi_size, bi_w, bi_h, _planes, bi_bpp, bi_comp, _bi_img, _, _, bi_clr_used, _ = struct.unpack_from(
+                "<IiiHHIIIIII", rpay, 22
+            )
+            assert bi_size == 40, f"Unexpected BITMAPINFOHEADER size: {bi_size}"
+            assert bi_bpp == 8, f"Expected 8bpp DIB, got {bi_bpp}bpp"
+            assert bi_comp == 0, f"Expected BI_RGB (0), got {bi_comp}"
+            num_colors = bi_clr_used or 256
+            pal_off = 62
+            plte = bytearray()
+            for idx in range(num_colors):
+                b, g, r, _a = rpay[pal_off + idx * 4 : pal_off + (idx + 1) * 4]
+                plte.extend((r, g, b))
+            pix_off = pal_off + num_colors * 4
+            height = abs(bi_h)
+            stride = (bi_w + 3) & ~3
+            raw_rows = bytearray()
+            for y in range(height):
+                src_y = (height - 1 - y) if bi_h > 0 else y
+                row_start = pix_off + src_y * stride
+                raw_rows.append(0)
+                raw_rows.extend(rpay[row_start : row_start + bi_w])
+            ihdr = struct.pack(">IIBBBBB", bi_w, height, 8, 3, 0, 0, 0)
+            return (
+                b"\x89PNG\r\n\x1a\n"
+                + png_chunk(b"IHDR", ihdr)
+                + png_chunk(b"PLTE", bytes(plte))
+                + png_chunk(b"IDAT", zlib.compress(bytes(raw_rows), 9))
+                + png_chunk(b"IEND", b"")
+            )
+        if rop == 0 or rsz < 6:
+            break
+        pos += rsz
+    raise ValueError("StretchDIB (0x0f43) record not found in DIB WMF")
+
+
+def vec_wmf_to_svg(wmf: bytes) -> str:
+    worg_x, worg_y = 0, 0
+    wext_x, wext_y = 1000, 1000
+    fill_rule = "evenodd"
+    obj_table: list[dict | None] = []
+    cur_pen: dict = {"kind": "pen", "stroke": "#000000", "width": 1}
+    cur_brush: dict = {"kind": "brush", "fill": "#000000"}
+    shapes: list[tuple] = []
+
+    def add_obj(obj: dict) -> None:
+        for i, existing in enumerate(obj_table):
+            if existing is None:
+                obj_table[i] = obj
+                return
+        obj_table.append(obj)
+
+    pos = 18
+    while pos + 6 <= len(wmf):
+        rsz = struct.unpack_from("<I", wmf, pos)[0] * 2
+        rop = struct.unpack_from("<H", wmf, pos + 4)[0]
+        rp = wmf[pos + 6 : pos + rsz]
+        if rop == 0:
+            break
+        if rop == 0x020B:
+            worg_y, worg_x = struct.unpack_from("<hh", rp, 0)
+        elif rop == 0x020C:
+            wext_y, wext_x = struct.unpack_from("<hh", rp, 0)
+        elif rop == 0x0106:
+            mode = struct.unpack_from("<H", rp, 0)[0]
+            fill_rule = "nonzero" if mode == 2 else "evenodd"
+        elif rop == 0x02FA:
+            style, pw, _, r, g, b = struct.unpack_from("<HHHBBB", rp, 0)
+            stroke = "none" if (style & 0x0F) == 5 else f"#{r:02x}{g:02x}{b:02x}"
+            add_obj({"kind": "pen", "stroke": stroke, "width": max(1, pw)})
+        elif rop == 0x02FC:
+            style, r, g, b = struct.unpack_from("<HBBB", rp, 0)
+            fill = "none" if style == 1 else f"#{r:02x}{g:02x}{b:02x}"
+            add_obj({"kind": "brush", "fill": fill})
+        elif rop == 0x012D:
+            idx = struct.unpack_from("<H", rp, 0)[0]
+            obj = obj_table[idx] if idx < len(obj_table) else None
+            if obj:
+                if obj["kind"] == "pen":
+                    cur_pen = obj
+                elif obj["kind"] == "brush":
+                    cur_brush = obj
+        elif rop == 0x01F0:
+            idx = struct.unpack_from("<H", rp, 0)[0]
+            if idx < len(obj_table):
+                obj_table[idx] = None
+        elif rop in (0x0324, 0x0325):
+            npts = struct.unpack_from("<H", rp, 0)[0]
+            pts = [struct.unpack_from("<hh", rp, 2 + i * 4) for i in range(npts)]
+            shapes.append((rop, pts, dict(cur_pen), dict(cur_brush), fill_rule))
+        elif rop == 0x0538:
+            np = struct.unpack_from("<H", rp, 0)[0]
+            cnts = struct.unpack_from(f"<{np}H", rp, 2)
+            off = 2 + 2 * np
+            polys = []
+            for cnt in cnts:
+                polys.append([struct.unpack_from("<hh", rp, off + i * 4) for i in range(cnt)])
+                off += cnt * 4
+            shapes.append((rop, polys, dict(cur_pen), dict(cur_brush), fill_rule))
+        elif rop == 0x041B:
+            b, r, t, l = struct.unpack_from("<hhhh", rp, 0)
+            shapes.append((rop, (l, t, r, b), dict(cur_pen), dict(cur_brush), fill_rule))
+        if rsz < 6:
+            break
+        pos += rsz
+
+    if wext_x == 0 or wext_y == 0:
+        raise ValueError("Zero window extent in vector WMF")
+
+    svg_w = 1000.0
+    svg_h = round(1000.0 * abs(wext_y) / abs(wext_x), 2)
+    scale = svg_w / abs(wext_x)
+
+    def tx(x: int) -> float:
+        return round((x - worg_x) / wext_x * svg_w, 2)
+
+    def ty(y: int) -> float:
+        return round((y - worg_y) / wext_y * svg_h, 2)
+
+    elems: list[str] = []
+    for shape in shapes:
+        rop = shape[0]
+        pen, brush, fr = shape[2], shape[3], shape[4]
+        sw = round(max(1.0, pen["width"] * scale), 2)
+        stroke_attr = f'stroke="{pen["stroke"]}"' + (f' stroke-width="{sw}" stroke-linejoin="round" stroke-linecap="round"' if pen["stroke"] != "none" else "")
+        if rop == 0x0324:
+            pts_str = " ".join(f"{tx(x)},{ty(y)}" for x, y in shape[1])
+            elems.append(f'<polygon points="{pts_str}" fill="{brush["fill"]}" fill-rule="{fr}" {stroke_attr}/>')
+        elif rop == 0x0325:
+            pts_str = " ".join(f"{tx(x)},{ty(y)}" for x, y in shape[1])
+            elems.append(f'<polyline points="{pts_str}" fill="none" {stroke_attr}/>')
+        elif rop == 0x0538:
+            d_parts = []
+            for poly in shape[1]:
+                if not poly:
+                    continue
+                coords = " ".join(f"{'M' if idx == 0 else 'L'}{tx(x)},{ty(y)}" for idx, (x, y) in enumerate(poly))
+                d_parts.append(coords + " Z")
+            elems.append(f'<path d="{" ".join(d_parts)}" fill="{brush["fill"]}" fill-rule="{fr}" {stroke_attr}/>')
+        elif rop == 0x041B:
+            l, t, r, b = shape[1]
+            x1, y1, x2, y2 = tx(l), ty(t), tx(r), ty(b)
+            rx, ry = round(min(x1, x2), 2), round(min(y1, y2), 2)
+            rw, rh = round(abs(x2 - x1), 2), round(abs(y2 - y1), 2)
+            elems.append(f'<rect x="{rx}" y="{ry}" width="{rw}" height="{rh}" fill="{brush["fill"]}" {stroke_attr}/>')
+
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -8 {round(svg_w + 16, 2)} {round(svg_h + 16, 2)}">\n'
+        + "\n".join(f"  {e}" for e in elems)
+        + "\n</svg>\n"
+    )
+
+
+def parse_wdb_file(path: Path, clipart_dir: Path | None = None) -> dict | None:
     raw = path.read_bytes()
     if len(raw) == 0:
         return None
-    mn0 = get_mn0_stream(raw)
+    entries, get_bytes = read_ole_archive(raw)
+    mn0 = next((get_bytes(e) for e in entries if e and e["name"] == "MN0"), None)
+    if mn0 is None:
+        raise ValueError(f"MN0 stream not found in {path}")
+    matador_wmfs = extract_matador_wmfs(entries, get_bytes)
+
     pos = 0
     cols: list[str] = []
     coords: dict[int, tuple[int, int]] = {}
+    boxes3: list[tuple[int, int, int, int, int]] = []
+    blob_items: list[tuple[str, int | bytes]] = []
     row0: dict[int, str] = {}
     in_data = False
     in_report = False
@@ -291,7 +512,28 @@ def parse_wdb_file(path: Path) -> dict | None:
         pay = mn0[pos + 4 : pos + 4 + rl]
         pos += 4 + rl
         if rt == 0x5464 and rl == 4:
-            pos += struct.unpack_from("<I", pay, 0)[0]
+            blen = struct.unpack_from("<I", pay, 0)[0]
+            blob = mn0[pos : pos + blen]
+            bpos = 0
+            while bpos + 4 <= len(blob):
+                if blob[bpos : bpos + 2] == b"MO":
+                    mo_id, mo_len = struct.unpack_from("<HI", blob, bpos + 2)
+                    bpos += 10 + mo_len
+                    if mo_id not in (2, 8) and mo_id in matador_wmfs:
+                        blob_items.append(("vec", matador_wmfs[mo_id]))
+                    else:
+                        blob_items.append(("skip", mo_id))
+                elif struct.unpack_from("<H", blob, bpos)[0] == 8:
+                    w_idx = blob.find(b"\x01\x00\x09\x00\x00\x03", bpos)
+                    if w_idx == -1:
+                        break
+                    w_sz = struct.unpack_from("<I", blob, w_idx + 6)[0] * 2
+                    wmf = blob[w_idx : w_idx + w_sz]
+                    bpos = w_idx + w_sz
+                    blob_items.append(("dib", wmf))
+                else:
+                    break
+            pos += blen
             continue
         if rt == 0x000B and not in_report:
             cols.append(pay.split(b"\x00", 1)[0].decode("cp1252"))
@@ -300,6 +542,10 @@ def parse_wdb_file(path: Path) -> dict | None:
             if ftype == 1 and len(pay) >= 36:
                 cidx = struct.unpack_from("<H", pay, 34)[0]
                 coords[cidx] = (y, x)
+            elif ftype == 3 and len(pay) >= 64:
+                w, h = struct.unpack_from("<HH", pay, 36)
+                slot_idx = struct.unpack_from("<H", pay, 62)[0]
+                boxes3.append((x, y, w, h, slot_idx))
         elif rt == 0x5423 and not in_report:
             in_data = True
         elif rt == 0x5417:
@@ -319,13 +565,44 @@ def parse_wdb_file(path: Path) -> dict | None:
     if not eof_seen:
         raise ValueError(f"Did not reach 0x0001 EOF in {path}")
 
+    # Pair clipart payloads with type=3 X coordinates for left-to-right ordering
+    raw_clips = [(kind, payload) for kind, payload in blob_items if kind in ("vec", "dib")]
+    clip_with_x: list[tuple[int, str, bytes]] = []
+    if len(boxes3) == len(blob_items) and [b[4] for b in boxes3] == list(range(len(blob_items))):
+        for idx, (kind, payload) in enumerate(blob_items):
+            if kind in ("vec", "dib"):
+                clip_with_x.append((boxes3[idx][0], kind, payload))
+    else:
+        non_layout_boxes = [b for b in boxes3 if b[2] < 4000 and b[3] < 4000]
+        for idx, (kind, payload) in enumerate(raw_clips):
+            bx = non_layout_boxes[idx][0] if idx < len(non_layout_boxes) else idx
+            clip_with_x.append((bx, kind, payload))
+    clip_with_x.sort(key=lambda item: item[0])
+
+    clip_files: list[str] = []
+    for _bx, kind, wmf in clip_with_x:
+        h = hashlib.sha1(wmf).hexdigest()[:10]
+        if kind == "dib":
+            fname = f"clip-{h}.png"
+            if clipart_dir is not None:
+                out_f = clipart_dir / fname
+                if not out_f.exists():
+                    out_f.write_bytes(dib_wmf_to_png(wmf))
+        else:
+            fname = f"clip-{h}.svg"
+            if clipart_dir is not None:
+                out_f = clipart_dir / fname
+                if not out_f.exists():
+                    out_f.write_text(vec_wmf_to_svg(wmf), encoding="utf-8")
+        clip_files.append(fname)
+
     ing_indices = sorted(
         [i for i, cname in enumerate(cols) if cname.startswith("Ingredient")],
         key=lambda c: coords.get(c, (99999, c)),
     )
     ings = [row0.get(i, "") for i in ing_indices if row0.get(i, "").strip()]
     meta = {cols[i]: row0.get(i, "") for i in range(len(cols)) if not cols[i].startswith("Ingredient")}
-    return {"meta": meta, "ingredients": ings}
+    return {"meta": meta, "ingredients": ings, "clipart": clip_files}
 
 
 def split_instruction_paragraphs(raw_inst: str, rel_path: str) -> list[str]:
@@ -522,11 +799,11 @@ def process_ingredients_and_notes(
     return items, notes, source
 
 
-def build_recipes(wdb_root: Path) -> list[Recipe]:
+def build_recipes(wdb_root: Path, clipart_dir: Path | None = None) -> list[Recipe]:
     parsed: dict[str, dict | None] = {}
     for p in sorted(wdb_root.rglob("*.wdb")):
         rel = p.relative_to(wdb_root).as_posix()
-        parsed[rel] = parse_wdb_file(p)
+        parsed[rel] = parse_wdb_file(p, clipart_dir=clipart_dir)
 
     recipes: list[Recipe] = []
 
@@ -548,6 +825,7 @@ def build_recipes(wdb_root: Path) -> list[Recipe]:
             ingredients=ch1_ings,
             instructions=[ch2_para1] + ch2_para2,
             notes=ch1_notes,
+            clipart=ch1["clipart"],
             source_files=["Breads & rolls/Challah 1 of 2.wdb", "Breads & rolls/Challa 2 of 2.wdb"],
         )
     )
@@ -573,6 +851,7 @@ def build_recipes(wdb_root: Path) -> list[Recipe]:
                 "(and skips adding the egg & vanilla in the directions) — standard Chocolate "
                 "Cherry Thumbprint recipes of this type use 1/2 cup butter."
             ],
+            clipart=cc1["clipart"],
             source_files=["COOKIES/Choc Cherry Cookie 1of 2.wdb", "COOKIES/Choc Cherry Cookie 2 of 2.wdb"],
         )
     )
@@ -593,6 +872,7 @@ def build_recipes(wdb_root: Path) -> list[Recipe]:
             ingredients=gps_ings,
             instructions=split_instruction_paragraphs(gps_sal["meta"].get("Instructions", ""), "Salads/German Potato Salad.wdb"),
             notes=gps_notes,
+            clipart=gps_sal["clipart"],
             source_files=["Salads/German Potato Salad.wdb", "VEGETABLES/German Potato Salad.wdb"],
         )
     )
@@ -704,6 +984,7 @@ def build_recipes(wdb_root: Path) -> list[Recipe]:
                 ingredients=ing_items,
                 instructions=inst_paras,
                 notes=notes,
+                clipart=data["clipart"],
                 source_files=[rel],
             )
         )
@@ -719,6 +1000,7 @@ def render_markdown(recipe: Recipe) -> str:
         f"Prep Time: {recipe.prep_time}",
         f"Servings: {recipe.servings}",
         f"Source: {recipe.source}",
+        f"Clipart: {', '.join(recipe.clipart)}",
         f"Missing: {'true' if recipe.missing else 'false'}",
         "",
     ]
@@ -752,7 +1034,14 @@ def main() -> None:
     parser.add_argument("--out-dir", type=Path, default=Path(__file__).resolve().parent.parent / "content")
     args = parser.parse_args()
 
-    recipes = build_recipes(args.wdb_dir)
+    clipart_dir = args.out_dir / "_clipart"
+    if clipart_dir.exists():
+        for old_clip in clipart_dir.iterdir():
+            if old_clip.is_file():
+                old_clip.unlink()
+    clipart_dir.mkdir(parents=True, exist_ok=True)
+
+    recipes = build_recipes(args.wdb_dir, clipart_dir=clipart_dir)
 
     # Clear existing content to avoid stale files if re-run
     if args.out_dir.exists():

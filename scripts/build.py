@@ -58,6 +58,7 @@ class RecipeDoc:
     ingredient_blocks: list[IngredientBlock]
     instructions: list[str]
     notes: list[str]
+    clipart: list[str]
     missing_text: str
 
     @property
@@ -103,6 +104,7 @@ def parse_markdown_recipe(path: Path) -> RecipeDoc:
     prep_time = meta.get("Prep Time", "")
     servings = meta.get("Servings", "")
     source = meta.get("Source", "")
+    clipart = [c.strip() for c in meta.get("Clipart", "").split(",") if c.strip()]
     missing = meta.get("Missing", "false").lower() == "true"
 
     sections: dict[str, list[str]] = {}
@@ -157,21 +159,25 @@ def parse_markdown_recipe(path: Path) -> RecipeDoc:
         ingredient_blocks=ingredient_blocks,
         instructions=instructions,
         notes=notes,
+        clipart=clipart,
         missing_text=missing_text,
     )
 
 
-def format_subtitle(author: str) -> str:
-    if author.lower().endswith("recipe"):
-        return author
-    return f"From the kitchen of {author}"
+def render_theme_toggle() -> str:
+    return (
+        '<div class="theme-switch" role="group" aria-label="Theme">'
+        '<button type="button" class="theme-btn" data-set-theme="classic" aria-pressed="true">Classic Card</button>'
+        '<button type="button" class="theme-btn" data-set-theme="modern" aria-pressed="false">Modern</button>'
+        "</div>"
+    )
 
 
 def render_head(title: str, description: str, canonical_path: str) -> str:
     full_title = title if title == SITE_TITLE else f"{title} — {SITE_TITLE}"
     canon = f"{SITE_URL}{canonical_path}"
     return f"""<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="classic">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -184,6 +190,12 @@ def render_head(title: str, description: str, canonical_path: str) -> str:
   <link rel="canonical" href="{esc(canon)}">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/style.css">
+  <script>
+    try {{
+      var t = localStorage.getItem("recipe-theme");
+      if (t === "modern" || t === "classic") document.documentElement.setAttribute("data-theme", t);
+    }} catch (e) {{}}
+  </script>
 </head>"""
 
 
@@ -212,9 +224,20 @@ def render_ingredients_html(blocks: list[IngredientBlock], interactive: bool = T
     return "\n        ".join(chunks)
 
 
+def render_subtitle_html(author: str) -> str:
+    if author.lower().endswith("recipe"):
+        return f'<p class="card-subtitle"><span class="author-script">{esc(author)}</span></p>'
+    return (
+        '<p class="card-subtitle">'
+        '<span class="kitchen-prefix">From the kitchen of<span class="classic-colon">:</span></span> '
+        f'<span class="author-script">{esc(author)}</span>'
+        "</p>"
+    )
+
+
 def render_recipe_article(r: RecipeDoc, interactive: bool = True, heading_tag: str = "h1", anchor_id: str = "") -> str:
     id_attr = f' id="{esc(anchor_id)}"' if anchor_id else ""
-    subtitle = format_subtitle(r.author)
+    subtitle_html = render_subtitle_html(r.author)
 
     meta_items: list[str] = []
     cat_links = ", ".join(
@@ -223,11 +246,16 @@ def render_recipe_article(r: RecipeDoc, interactive: bool = True, heading_tag: s
     )
     meta_items.append(f"<div><dt>Category</dt><dd>{cat_links}</dd></div>")
     if r.prep_time:
-        meta_items.append(f"<div><dt>Prep time</dt><dd>{esc(r.prep_time)}</dd></div>")
+        meta_items.append(f"<div><dt>Preparation time</dt><dd>{esc(r.prep_time)}</dd></div>")
     if r.servings:
         meta_items.append(f"<div><dt>Servings</dt><dd>{esc(r.servings)}</dd></div>")
     if r.source:
         meta_items.append(f"<div><dt>Recipe from</dt><dd>{esc(r.source)}</dd></div>")
+
+    clipart_html = ""
+    if r.clipart:
+        imgs = "".join(f'<img src="/assets/clipart/{esc(fn)}" alt="" loading="lazy">' for fn in r.clipart)
+        clipart_html = f'<div class="card-clipart">{imgs}</div>'
 
     if r.missing:
         body_html = f"""
@@ -238,35 +266,44 @@ def render_recipe_article(r: RecipeDoc, interactive: bool = True, heading_tag: s
       </div>"""
     else:
         ings_html = render_ingredients_html(r.ingredient_blocks, interactive=interactive)
-        inst_html = "\n        ".join(f"<p>{esc(p)}</p>" for p in r.instructions)
+        inst_html = "\n          ".join(f"<p>{esc(p)}</p>" for p in r.instructions)
         notes_html = ""
         if r.notes:
-            notes_ps = "\n          ".join(f"<p>{esc(n)}</p>" for n in r.notes)
+            notes_ps = "\n            ".join(f"<p>{esc(n)}</p>" for n in r.notes)
             notes_html = f"""
-      <aside class="recipe-notes">
-        <h2>Family Note</h2>
-        {notes_ps}
-      </aside>"""
+        <aside class="recipe-notes">
+          <h2>Family Note</h2>
+          {notes_ps}
+        </aside>"""
         body_html = f"""
       <div class="recipe-columns">
         <section class="ingredients-col">
           <h2>Ingredients</h2>
-          {ings_html}
+          <div class="col-body">
+            {ings_html}
+          </div>
         </section>
         <section class="instructions-col">
           <h2>Instructions</h2>
-          {inst_html}
-          {notes_html}
+          <div class="col-body">
+            {inst_html}
+            {notes_html}
+          </div>
         </section>
       </div>"""
 
     return f"""<article class="recipe-card{' is-missing' if r.missing else ''}"{id_attr}>
     <header class="card-header">
-      <{heading_tag}>{esc(r.title)}</{heading_tag}>
-      <p class="card-subtitle">{esc(subtitle)}</p>
-      <dl class="card-meta">
-        {''.join(meta_items)}
-      </dl>
+      <div class="card-top">
+        {clipart_html}
+        <div class="card-title-group">
+          <{heading_tag}>{esc(r.title)}</{heading_tag}>
+          {subtitle_html}
+          <dl class="card-meta">
+            {''.join(meta_items)}
+          </dl>
+        </div>
+      </div>
     </header>
     {body_html}
   </article>"""
@@ -288,6 +325,7 @@ def render_recipe_page(r: RecipeDoc) -> str:
       <a class="nav-cat" href="/#cat-{esc(primary_cat_slug)}">{esc(r.categories[0])}</a>
     </div>
     <div class="nav-actions">
+      {render_theme_toggle()}
       <button type="button" class="btn-secondary" id="wake-lock-btn" hidden>Keep screen on</button>
       <button type="button" class="btn-secondary" onclick="window.print()">Print</button>
     </div>
@@ -348,11 +386,16 @@ def render_index_page(recipes: list[RecipeDoc]) -> str:
                     other = [x for x in r.categories if x != c]
                     badges.append(f'<span class="badge">Also in {esc(", ".join(other))}</span>')
 
+            thumb_html = (
+                f'<img class="card-thumb" src="/assets/clipart/{esc(r.clipart[0])}" alt="" loading="lazy">'
+                if r.clipart
+                else ""
+            )
             cards_html.append(
                 f'<li class="recipe-link-card{" is-missing" if r.missing else ""}" '
                 f'data-recipe-id="{esc(r.url_path)}" data-cats="{esc(all_cat_slugs)}">'
                 f'<a href="{esc(r.url_path)}">'
-                f'<span class="recipe-link-title">{esc(r.title)}</span>'
+                f'<span class="card-link-top">{thumb_html}<span class="recipe-link-title">{esc(r.title)}</span></span>'
                 f'<span class="recipe-link-meta">{"".join(badges)}</span>'
                 f"</a></li>"
             )
@@ -383,9 +426,10 @@ def render_index_page(recipes: list[RecipeDoc]) -> str:
     <div class="hero-inner">
       <p class="hero-kicker">Plona Family Recipe Collection</p>
       <h1>{esc(SITE_TITLE)}</h1>
-      <p class="hero-sub">From the kitchen of Mary C. Plona &middot; {complete_cnt} digitized cards &amp; {missing_cnt} missing mysteries</p>
+      <p class="hero-sub">From the kitchen of<span class="classic-colon">:</span> <span class="author-script">Mary C. Plona</span> &middot; {complete_cnt} digitized cards &amp; {missing_cnt} missing mysteries</p>
       <div class="hero-links">
         <a href="/all/" class="btn-outline">Print / View All Cards</a>
+        {render_theme_toggle()}
       </div>
     </div>
   </header>
@@ -467,6 +511,7 @@ def render_all_page(recipes: list[RecipeDoc]) -> str:
       <a class="nav-back" href="/">&larr; Back to Search</a>
     </div>
     <div class="nav-actions">
+      {render_theme_toggle()}
       <button type="button" class="btn-secondary" onclick="window.print()">Print All</button>
     </div>
   </nav>
@@ -474,7 +519,7 @@ def render_all_page(recipes: list[RecipeDoc]) -> str:
   <main class="container">
     <header class="all-header">
       <h1>{esc(SITE_TITLE)}</h1>
-      <p class="card-subtitle">From the kitchen of Mary C. Plona &middot; Complete Printable Edition ({len(complete)} recipes)</p>
+      <p class="card-subtitle">From the kitchen of<span class="classic-colon">:</span> <span class="author-script">Mary C. Plona</span> &middot; Complete Printable Edition ({len(complete)} recipes)</p>
     </header>
 
     <section class="toc-panel">
@@ -520,7 +565,22 @@ def render_recipes_redirect() -> str:
 
 
 STYLE_CSS = """\
-:root {
+:root,
+[data-theme="classic"] {
+  --bg: #e8e4dc;
+  --surface: #ffffff;
+  --surface-muted: #f2f2f2;
+  --ink: #111111;
+  --muted: #444444;
+  --accent: #111111;
+  --accent-soft: #efefef;
+  --border: #111111;
+  --rule: #111111;
+  --shadow: 3px 3px 0 rgba(0, 0, 0, 0.14);
+  --radius: 0px;
+}
+
+[data-theme="modern"] {
   --bg: #f6f1e7;
   --surface: #fffdf8;
   --surface-muted: #efe7d8;
@@ -1166,10 +1226,287 @@ a {
     text-decoration: none;
   }
 }
+
+/* Theme toggle & clipart layout */
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.theme-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.1;
+  min-height: 34px;
+  padding: 0.35rem 0.72rem;
+  border-radius: calc(var(--radius) * 0.75);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.theme-btn[aria-pressed="true"] {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.theme-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem 1.25rem;
+  flex-wrap: wrap;
+}
+
+.card-title-group {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.card-clipart {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+
+.card-clipart img {
+  display: block;
+  height: 76px;
+  width: auto;
+  max-width: 110px;
+  object-fit: contain;
+}
+
+.card-link-top {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.25rem;
+}
+
+.card-thumb {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.col-body > :first-child {
+  margin-top: 0;
+}
+
+.col-body > :last-child {
+  margin-bottom: 0;
+}
+
+[data-theme="modern"] .card-clipart,
+[data-theme="modern"] .card-thumb,
+[data-theme="modern"] .classic-colon {
+  display: none;
+}
+
+[data-theme="classic"] .btn-outline,
+[data-theme="classic"] .btn-secondary {
+  border-radius: 0;
+  border-width: 1.5px;
+}
+
+[data-theme="classic"] .recipe-card {
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+  border-width: 1.5px;
+}
+
+[data-theme="classic"] .recipe-card .card-header {
+  border-bottom: 0;
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+[data-theme="classic"] .card-header h1,
+[data-theme="classic"] .card-header h2 {
+  font-family: "Times New Roman", Times, Georgia, serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #111111;
+  line-height: 1.15;
+}
+
+[data-theme="classic"] .card-subtitle {
+  margin: 0.35rem 0 0.7rem;
+  font-style: normal;
+  color: #111111;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+[data-theme="classic"] .kitchen-prefix {
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+  font-style: normal;
+  font-size: 0.88rem;
+  color: #333333;
+}
+
+[data-theme="classic"] .author-script {
+  font-family: "Lucida Handwriting", "Segoe Script", "Apple Chancery", "Bradley Hand", "URW Chancery L", cursive;
+  font-style: normal;
+  font-size: 1.16rem;
+  font-weight: 400;
+  color: #111111;
+}
+
+[data-theme="classic"] .card-meta {
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+  font-size: 0.88rem;
+  gap: 0.3rem 1.4rem;
+  margin-top: 0.2rem;
+}
+
+[data-theme="classic"] .card-meta dt {
+  color: #111111;
+}
+
+[data-theme="classic"] .ingredients-col h2,
+[data-theme="classic"] .instructions-col h2 {
+  margin: 0;
+  padding: 0 0 0.35rem;
+  font-family: "Times New Roman", Times, Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #111111;
+  border-bottom: 2px solid #111111;
+}
+
+[data-theme="classic"] .col-body {
+  padding-top: 0.75rem;
+}
+
+[data-theme="classic"] .recipe-columns {
+  gap: 1.25rem;
+}
+
+@media (max-width: 520px) {
+  .card-clipart img {
+    height: 60px;
+    max-width: 92px;
+  }
+}
+
+@media (min-width: 520px) {
+  [data-theme="classic"] .card-top {
+    flex-wrap: nowrap;
+  }
+}
+
+@media (min-width: 720px) {
+  [data-theme="classic"] .recipe-card {
+    padding: 1.75rem 2rem 2rem;
+  }
+  [data-theme="classic"] .recipe-columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 0;
+    align-items: stretch;
+  }
+  [data-theme="classic"] .ingredients-col,
+  [data-theme="classic"] .instructions-col {
+    display: flex;
+    flex-direction: column;
+  }
+  [data-theme="classic"] .ingredients-col h2 {
+    padding: 0 1.25rem 0.4rem 0;
+  }
+  [data-theme="classic"] .instructions-col h2 {
+    padding: 0 0 0.4rem 1.25rem;
+  }
+  [data-theme="classic"] .ingredients-col .col-body {
+    padding: 0.85rem 1.25rem 0.25rem 0;
+    flex: 1;
+  }
+  [data-theme="classic"] .instructions-col .col-body {
+    padding: 0.85rem 0 0.25rem 1.25rem;
+    border-left: 1.5px solid #111111;
+    flex: 1;
+  }
+}
+
+@media print {
+  .theme-switch {
+    display: none !important;
+  }
+  [data-theme="classic"] body {
+    background: #ffffff;
+  }
+  [data-theme="classic"] .recipe-card {
+    border: 1.5px solid #111111;
+    box-shadow: none;
+    padding: 1.1rem 1.25rem 1.25rem;
+  }
+  [data-theme="classic"] .recipe-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 0;
+    align-items: stretch;
+  }
+  [data-theme="classic"] .ingredients-col,
+  [data-theme="classic"] .instructions-col {
+    display: flex;
+    flex-direction: column;
+  }
+  [data-theme="classic"] .ingredients-col h2 {
+    padding: 0 1rem 0.35rem 0;
+  }
+  [data-theme="classic"] .instructions-col h2 {
+    padding: 0 0 0.35rem 1rem;
+  }
+  [data-theme="classic"] .ingredients-col .col-body {
+    padding: 0.7rem 1rem 0.15rem 0;
+    flex: 1;
+  }
+  [data-theme="classic"] .instructions-col .col-body {
+    padding: 0.7rem 0 0.15rem 1rem;
+    border-left: 1.5px solid #111111;
+    flex: 1;
+  }
+}
 """
 
 APP_JS = """\
 (() => {
+  const themeButtons = Array.from(document.querySelectorAll("[data-set-theme]"));
+  const syncThemeButtons = (mode) => {
+    for (const btn of themeButtons) {
+      btn.setAttribute("aria-pressed", btn.dataset.setTheme === mode ? "true" : "false");
+    }
+  };
+  const currentTheme = document.documentElement.getAttribute("data-theme") === "modern" ? "modern" : "classic";
+  syncThemeButtons(currentTheme);
+  for (const btn of themeButtons) {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.setTheme === "modern" ? "modern" : "classic";
+      document.documentElement.setAttribute("data-theme", mode);
+      try {
+        localStorage.setItem("recipe-theme", mode);
+      } catch (_err) {}
+      syncThemeButtons(mode);
+    });
+  }
+
   const searchInput = document.getElementById("recipe-search");
   const clearBtn = document.getElementById("clear-search");
   const resultCount = document.getElementById("result-count");
@@ -1331,6 +1668,13 @@ def main() -> None:
             shutil.rmtree(target)
 
     (root / "assets").mkdir(parents=True, exist_ok=True)
+    clipart_src = content_dir / "_clipart"
+    if clipart_src.is_dir():
+        clipart_dest = root / "assets" / "clipart"
+        clipart_dest.mkdir(parents=True, exist_ok=True)
+        for asset in sorted(clipart_src.iterdir()):
+            if asset.is_file():
+                shutil.copy2(asset, clipart_dest / asset.name)
     (root / "assets" / "style.css").write_text(STYLE_CSS, encoding="utf-8")
     (root / "assets" / "app.js").write_text(APP_JS, encoding="utf-8")
     (root / "favicon.svg").write_text(FAVICON_SVG, encoding="utf-8")

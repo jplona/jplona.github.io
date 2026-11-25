@@ -4,6 +4,7 @@ Author: Mary C. Plona
 Prep Time: 1 hr
 Servings: 8
 Source: Sisters of Notre Dame
+Clipart: clip-202f37f13e.png
 Missing: false
 
 ## Ingredients

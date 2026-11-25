@@ -4,6 +4,7 @@ Author: Mary C. Plona
 Prep Time: 1 hr
 Servings: 48 tarts
 Source: 
+Clipart: clip-e08a15b418.png
 Missing: false
 
 ## Ingredients

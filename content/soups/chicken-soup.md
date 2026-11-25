@@ -4,6 +4,7 @@ Author: Mom Plona's Recipe
 Prep Time: 20 min
 Servings: 8 - 10
 Source: 
+Clipart: clip-9a9e734272.png
 Missing: false
 
 ## Ingredients

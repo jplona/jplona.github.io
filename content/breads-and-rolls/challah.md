@@ -4,6 +4,7 @@ Author: Mary C. Plona
 Prep Time: 2 hrs
 Servings: 1 loaf
 Source: 
+Clipart: clip-c8fb8998e1.png
 Missing: false
 
 ## Ingredients

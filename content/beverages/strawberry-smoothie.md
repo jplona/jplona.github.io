@@ -4,6 +4,7 @@ Author: Mary C. Plona
 Prep Time: 
 Servings: 
 Source: 
+Clipart: 
 Missing: true
 
 ## Missing Card
