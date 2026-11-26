@@ -256,6 +256,36 @@ def main() -> None:
         imgs = re.findall(r"<img\b", m.group(1))
         assert_true(len(imgs) == 2, f"Expected 2 clipart imgs in {slug}, found {len(imgs)}")
 
+    # Submission & correction mailto links
+    assert_true(
+        "mailto:recipes@plona.family?subject=New%20family%20recipe%20submission" in index_html,
+        "index.html missing pre-filled new recipe mailto link",
+    )
+    assert_true(">Submit a Recipe<" in index_html, "index.html missing Submit a Recipe button")
+
+    coffee_html = (ROOT / "recipes/cakes/sour-cream-coffee-cake/index.html").read_text(encoding="utf-8")
+    assert_true(
+        "mailto:recipes@plona.family?subject=Recipe%20correction%3A%20Sour%20Cream%20Coffee%20Cake" in coffee_html,
+        "Sour Cream Coffee Cake missing pre-filled correction mailto link",
+    )
+    assert_true(">Send a Correction<" in coffee_html, "Sour Cream Coffee Cake missing Send a Correction button")
+    assert_true(">Submit a Recipe<" in coffee_html, "Sour Cream Coffee Cake missing Submit a Recipe button")
+
+    missing_html = (ROOT / "recipes/beverages/strawberry-smoothie/index.html").read_text(encoding="utf-8")
+    assert_true(">Submit a Recipe<" in missing_html, "Missing card missing Submit a Recipe button")
+    assert_true(">Send a Correction<" not in missing_html, "Missing card should not have Send a Correction button")
+    assert_true("physical index card" not in missing_html, "Missing card still asks for physical index card")
+
+    all_html = (ROOT / "all/index.html").read_text(encoding="utf-8")
+    assert_true('<script src="/assets/app.js" defer></script>' in all_html, "all/index.html missing app.js script")
+    assert_true(">Submit a Recipe<" in all_html, "all/index.html missing Submit a Recipe link")
+
+    for hp, links in links_by_file.items():
+        for link in links:
+            if link.startswith("mailto:"):
+                assert_true(link.startswith("mailto:recipes@plona.family"), f"Unexpected mailto target in {hp}: {link}")
+                assert_true("+" not in link, f"Found '+' in mailto link (expected %20) in {hp}: {link}")
+
     print(f"ALL VERIFICATION CHECKS PASSED: {len(md_files)} recipes ({complete_count} complete, {missing_count} missing), {len(html_files)} HTML pages, 0 broken links.")
 
 

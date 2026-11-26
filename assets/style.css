@@ -834,10 +834,21 @@ a {
   gap: 1.25rem;
 }
 
+.recipe-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin: -0.65rem 0 1.5rem;
+}
+
 @media (max-width: 520px) {
   .card-clipart img {
     height: 60px;
     max-width: 92px;
+  }
+  .recipe-feedback {
+    justify-content: center;
   }
 }
 

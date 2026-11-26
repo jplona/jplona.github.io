@@ -9,6 +9,7 @@ import json
 import re
 import shutil
 import unicodedata
+import urllib.parse
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -35,6 +36,7 @@ CATEGORY_ORDER = [
 
 SITE_TITLE = "Grandma Mary's Recipes"
 SITE_URL = "https://recipes.plona.family"
+CONTACT_EMAIL = "recipes@plona.family"
 
 
 @dataclass
@@ -87,6 +89,36 @@ def slugify(text: str) -> str:
 
 def esc(text: str) -> str:
     return html.escape(text, quote=True)
+
+
+def mailto_href(subject: str, body: str) -> str:
+    norm_body = body.replace("\r\n", "\n").replace("\n", "\r\n")
+    q_sub = urllib.parse.quote(subject, safe="")
+    q_body = urllib.parse.quote(norm_body, safe="")
+    return f"mailto:{CONTACT_EMAIL}?subject={q_sub}&body={q_body}"
+
+
+def new_recipe_mailto() -> str:
+    body = (
+        "Recipe Title: \n"
+        "Category (e.g., Cookies, Pies, Soups): \n"
+        "From the kitchen of / Source: \n"
+        "Prep Time & Servings (optional): \n\n"
+        "Ingredients:\n"
+        "- \n\n"
+        "Instructions:\n\n\n"
+        "Family notes or memories (optional — feel free to attach a photo too!):\n"
+    )
+    return mailto_href("New family recipe submission", body)
+
+
+def correction_mailto(r: RecipeDoc) -> str:
+    body = (
+        f"Recipe: {r.title}\n"
+        f"Page: {SITE_URL}{r.url_path}\n\n"
+        "What should be corrected or updated?\n\n"
+    )
+    return mailto_href(f"Recipe correction: {r.title}", body)
 
 
 def parse_markdown_recipe(path: Path) -> RecipeDoc:
@@ -262,7 +294,7 @@ def render_recipe_article(r: RecipeDoc, interactive: bool = True, heading_tag: s
       <div class="missing-card-body">
         <p class="missing-badge-lg">Missing Recipe Card</p>
         <p>{esc(r.missing_text)}</p>
-        <p class="missing-prompt">Part of the family mystery! If anyone has Grandma Mary's physical index card for this recipe, let us know so we can add it to the collection.</p>
+        <p class="missing-prompt">Part of the family mystery — only an empty file survived in the Sept. 2001 collection.</p>
       </div>"""
     else:
         ings_html = render_ingredients_html(r.ingredient_blocks, interactive=interactive)
@@ -317,6 +349,21 @@ def render_recipe_page(r: RecipeDoc) -> str:
     )
     primary_cat_slug = r.primary_cat_slug
     article = render_recipe_article(r, interactive=True, heading_tag="h1")
+    submit_href = new_recipe_mailto()
+    if r.missing:
+        feedback_html = (
+            '<div class="recipe-feedback no-print">'
+            f'<a class="btn-secondary" href="{esc(submit_href)}">Submit a Recipe</a>'
+            "</div>"
+        )
+    else:
+        corr_href = correction_mailto(r)
+        feedback_html = (
+            '<div class="recipe-feedback no-print">'
+            f'<a class="btn-secondary" href="{esc(corr_href)}">Send a Correction</a>'
+            f'<a class="btn-secondary" href="{esc(submit_href)}">Submit a Recipe</a>'
+            "</div>"
+        )
     return f"""{render_head(r.title, desc, r.url_path)}
 <body class="page-recipe">
   <nav class="top-nav no-print" aria-label="Breadcrumb and actions">
@@ -332,9 +379,10 @@ def render_recipe_page(r: RecipeDoc) -> str:
   </nav>
   <main class="container">
     {article}
+    {feedback_html}
   </main>
   <footer class="site-footer no-print">
-    <p><a href="/">Plona Family Recipe Collection</a> &middot; <a href="/all/">View / Print All Cards</a></p>
+    <p><a href="/">Plona Family Recipe Collection</a> &middot; <a href="/all/">View / Print All Cards</a> &middot; <a href="mailto:{esc(CONTACT_EMAIL)}">{esc(CONTACT_EMAIL)}</a></p>
   </footer>
   <script src="/assets/app.js" defer></script>
 </body>
@@ -419,6 +467,7 @@ def render_index_page(recipes: list[RecipeDoc]) -> str:
 
     complete_cnt = sum(1 for r in recipes if not r.missing)
     missing_cnt = len(recipes) - complete_cnt
+    submit_href = new_recipe_mailto()
 
     return f"""{render_head(SITE_TITLE, "Grandma Mary's family recipe collection — digitized from her original Microsoft Works recipe cards.", "/")}
 <body class="page-home">
@@ -429,6 +478,7 @@ def render_index_page(recipes: list[RecipeDoc]) -> str:
       <p class="hero-sub">From the kitchen of<span class="classic-colon">:</span> <span class="author-script">Mary C. Plona</span> &middot; {complete_cnt} digitized cards &amp; {missing_cnt} missing mysteries</p>
       <div class="hero-links">
         <a href="/all/" class="btn-outline">Print / View All Cards</a>
+        <a href="{esc(submit_href)}" class="btn-outline">Submit a Recipe</a>
         {render_theme_toggle()}
       </div>
     </div>
@@ -456,8 +506,8 @@ def render_index_page(recipes: list[RecipeDoc]) -> str:
     </div>
   </main>
 
-  <footer class="site-footer">
-    <p>Converted from Grandma Mary's original Microsoft Works (<code>.wdb</code>) recipe cards &middot; <a href="/all/">Full Printable Edition</a></p>
+  <footer class="site-footer no-print">
+    <p>Converted from Grandma Mary's original Microsoft Works (<code>.wdb</code>) recipe cards &middot; <a href="/all/">Full Printable Edition</a> &middot; <a href="{esc(submit_href)}">Submit a Recipe</a> (<a href="mailto:{esc(CONTACT_EMAIL)}">{esc(CONTACT_EMAIL)}</a>)</p>
   </footer>
 
   <script id="search-data" type="application/json">{search_json}</script>
@@ -503,6 +553,7 @@ def render_all_page(recipes: list[RecipeDoc]) -> str:
         f'<li><a href="{esc(r.url_path)}">{esc(r.title)}</a> ({esc(r.categories[0])})</li>'
         for r in missing_list
     )
+    submit_href = new_recipe_mailto()
 
     return f"""{render_head("All Recipes (Printable Edition)", "All 144 complete Grandma Mary recipes in one printable view.", "/all/")}
 <body class="page-all">
@@ -543,6 +594,11 @@ def render_all_page(recipes: list[RecipeDoc]) -> str:
       </ul>
     </section>
   </main>
+
+  <footer class="site-footer no-print">
+    <p><a href="/">Plona Family Recipe Collection</a> &middot; <a href="{esc(submit_href)}">Submit a Recipe</a> (<a href="mailto:{esc(CONTACT_EMAIL)}">{esc(CONTACT_EMAIL)}</a>)</p>
+  </footer>
+  <script src="/assets/app.js" defer></script>
 </body>
 </html>
 """
@@ -1401,10 +1457,21 @@ a {
   gap: 1.25rem;
 }
 
+.recipe-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin: -0.65rem 0 1.5rem;
+}
+
 @media (max-width: 520px) {
   .card-clipart img {
     height: 60px;
     max-width: 92px;
+  }
+  .recipe-feedback {
+    justify-content: center;
   }
 }
 
